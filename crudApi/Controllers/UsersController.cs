@@ -29,9 +29,18 @@ namespace crudApi.Controllers
                 if (response.StatusCode != System.Net.HttpStatusCode.OK)
                     return StatusCode(StatusCodes.Status404NotFound);
 
-                var body = await response.Content.ReadAsStringAsync();
+                var body = await response.Content.ReadFromJsonAsync<UsersDataDto>();
 
-                return Ok(body);
+                foreach (var user in body?.Data) {
+                    _cache.Cache.Set<UserDto>($"user{user.id}", user,
+                        new MemoryCacheEntryOptions
+                        {
+                            AbsoluteExpirationRelativeToNow = new TimeSpan(1, 0, 0),
+                            Size = 10
+                        });
+                }
+
+                return Ok(body.Data);
             }
             catch (Exception ex)
             {
